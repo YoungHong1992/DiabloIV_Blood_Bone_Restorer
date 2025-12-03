@@ -29,10 +29,7 @@ jobs:
         id: plugins
         shell: pwsh
         run: |
-          $plugins = python - <<'PY'
-          import PySide6, os
-          print(os.path.join(os.path.dirname(PySide6.__file__), 'plugins'))
-          PY
+          $plugins = python -c "import PySide6, os; print(os.path.join(os.path.dirname(PySide6.__file__), 'plugins'))"
           Add-Content -Path $env:GITHUB_ENV -Value "PY_SIDE_PLUGINS=$plugins"
 
       - name: Build with PyInstaller

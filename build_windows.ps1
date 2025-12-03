@@ -7,10 +7,7 @@ python -m pip install --upgrade pip
 if (Test-Path requirements.txt) { pip install -r requirements.txt }
 pip install pyinstaller PySide6
 
-$plugins = python - <<'PY'
-import PySide6, os
-print(os.path.join(os.path.dirname(PySide6.__file__), 'plugins'))
-PY
+$plugins = python -c "import PySide6, os; print(os.path.join(os.path.dirname(PySide6.__file__), 'plugins'))"
 
 Write-Host "Detected PySide6 plugins at: $plugins"
 
