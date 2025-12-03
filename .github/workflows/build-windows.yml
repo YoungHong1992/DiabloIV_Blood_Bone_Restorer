@@ -1,0 +1,56 @@
+name: Build Windows EXE
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          if (Test-Path requirements.txt) { pip install -r requirements.txt }
+          pip install pyinstaller PySide6
+
+      - name: Get PySide6 plugins path
+        id: plugins
+        shell: pwsh
+        run: |
+          $plugins = python - <<'PY'
+          import PySide6, os
+          print(os.path.join(os.path.dirname(PySide6.__file__), 'plugins'))
+          PY
+          Add-Content -Path $env:GITHUB_ENV -Value "PY_SIDE_PLUGINS=$plugins"
+
+      - name: Build with PyInstaller
+        shell: pwsh
+        run: |
+          $plugins = $env:PY_SIDE_PLUGINS
+          Write-Host "Using PySide6 plugins path: $plugins"
+          pyinstaller --noconfirm --onefile --windowed --name "DiabloIV_BBR" --add-data "$plugins;PySide6_plugins" DiabloIV_Blood_Bone_Restorer.py
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DiabloIV_BBR
+          path: dist/DiabloIV_BBR.exe
+
+      - name: Create GitHub Release (on tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: dist/DiabloIV_BBR.exe
+          token: ${{ secrets.GITHUB_TOKEN }}
