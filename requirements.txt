@@ -1,4 +1,0 @@
-# 暗黑破坏神IV Agent模式配置器 - PySide6 Fluent-Widgets GUI版本依赖
-# 使用: pip install -r requirements.txt
-
-PySide6-Fluent-Widgets>=1.9.2

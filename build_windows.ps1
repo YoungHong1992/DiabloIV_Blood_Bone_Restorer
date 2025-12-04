@@ -35,14 +35,9 @@ if (Test-Path requirements.txt) {
 Write-Host "Installing pyinstaller..."
 python -m pip install pyinstaller
 
-# 获取PySide6插件路径
-$plugins = python -c "import PySide6, os; print(os.path.join(os.path.dirname(PySide6.__file__), 'plugins'))"
-
-Write-Host "Detected PySide6 plugins at: $plugins"
-
 # 使用python -m pyinstaller而不是直接调用pyinstaller
 Write-Host "Running pyinstaller..."
-python -m PyInstaller --noconfirm --onefile --windowed --name $Name --add-data "$plugins;PySide6_plugins" DiabloIV_Blood_Bone_Restorer.py
+python -m PyInstaller --noconfirm --onefile --windowed --name $Name DiabloIV_Blood_Bone_Restorer.py
 
 if (Test-Path "dist\$Name.exe") {
     Write-Host "Build successful: dist\$Name.exe"

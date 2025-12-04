@@ -2,150 +2,39 @@ import sys
 import os
 import time
 import platform
+import tkinter as tk
+from tkinter import ttk, filedialog, messagebox
+import threading
+
 # 引入 winreg 用于访问 Windows 注册表
 try:
     import winreg
 except ImportError:
     winreg = None
 
-from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
-                               QHBoxLayout, QLabel, QLineEdit, QPushButton, 
-                               QTextEdit, QFileDialog, QDialog, QFrame)
-from PySide6.QtCore import Qt, QTimer, QSize
-from PySide6.QtGui import QFont, QIcon, QCursor, QColor, QPalette
-
-# --- 样式表 (QSS) ---
-STYLESHEET = """
-QMainWindow {
-    background-color: #1a1a1a;
-}
-
-QWidget {
-    font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
-    color: #d4d4d8; /* zinc-300 */
-    font-size: 14px;
-}
-
-/* 标题栏区域背景 */
-#HeaderFrame {
-    background-color: #0f0f11;
-    border-bottom: 1px solid #3f3f46;
-}
-
-/* 标题文字 */
-#TitleLabel {
-    color: #ef4444; /* red-500 */
-    font-size: 24px;
-    font-weight: bold;
-    font-family: "Times New Roman", serif; /* 模拟 Cinzel */
-}
-
-#SubtitleLabel {
-    color: #71717a; /* zinc-500 */
-    font-size: 12px;
-    letter-spacing: 2px;
-}
-
-/* 输入框 */
-QLineEdit {
-    background-color: #000000;
-    border: 1px solid #3f3f46;
-    border-radius: 4px;
-    padding: 8px;
-    color: #e4e4e7;
-    selection-background-color: #991b1b;
-}
-QLineEdit:focus {
-    border: 1px solid #b91c1c;
-}
-
-/* 普通按钮 */
-QPushButton#BrowseBtn, QPushButton#ModalCloseBtn {
-    background-color: #27272a; /* zinc-800 */
-    border: 1px solid #3f3f46;
-    border-radius: 4px;
-    padding: 6px 12px;
-    color: #e4e4e7;
-}
-QPushButton#BrowseBtn:hover, QPushButton#ModalCloseBtn:hover {
-    background-color: #3f3f46; /* zinc-700 */
-}
-
-/* 红色主按钮 (执行反和谐) - 默认状态 */
-QPushButton#RestoreBtn {
-    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #991b1b, stop:1 #7f1d1d);
-    border: 1px solid #b91c1c;
-    border-radius: 4px;
-    color: white;
-    font-weight: bold;
-    padding: 10px 20px;
-    font-size: 15px;
-}
-QPushButton#RestoreBtn:hover {
-    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #b91c1c, stop:1 #991b1b);
-}
-QPushButton#RestoreBtn:pressed {
-    background-color: #7f1d1d;
-    padding-top: 12px;
-}
-/* 绿色主按钮 (已完成状态，查看指引) */
-QPushButton#RestoreBtn[mode="guide"] {
-    background-color: #064e3b; /* emerald-900 */
-    border: 1px solid #059669; /* emerald-600 */
-    color: #a7f3d0;
-}
-QPushButton#RestoreBtn[mode="guide"]:hover {
-    background-color: #065f46;
-}
-
-/* 复制按钮 */
-QPushButton#CopyBtn {
-    background-color: #27272a;
-    border: 1px solid #3f3f46;
-    border-radius: 4px;
-    color: #a1a1aa;
-    padding: 4px 8px;
-    font-size: 12px;
-}
-QPushButton#CopyBtn:hover {
-    color: white;
-    background-color: #3f3f46;
-}
-
-/* 日志区域 */
-QTextEdit {
-    background-color: #000000;
-    border: 1px solid #3f3f46;
-    border-radius: 4px;
-    font-family: "Consolas", "Courier New", monospace;
-    font-size: 12px;
-    padding: 5px;
-}
-
-/* 弹窗样式 */
-QDialog {
-    background-color: #18181b;
-    border: 1px solid #7f1d1d;
-}
-"""
-
-class FinalStepDialog(QDialog):
+class FinalStepDialog(tk.Toplevel):
     """完成后的引导弹窗"""
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("最后一步: 战网设置")
-        self.setFixedSize(500, 350)
-        self.setWindowFlags(Qt.Dialog | Qt.FramelessWindowHint)
+        self.title("最后一步: 战网设置")
+        self.geometry("500x350")
+        self.resizable(False, False)
+        self.transient(parent)
+        self.grab_set()
         
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(30, 30, 30, 30)
-        layout.setSpacing(15)
-
+        # 设置样式
+        self.configure(bg="#18181b")
+        
+        # 创建主框架
+        main_frame = tk.Frame(self, bg="#18181b")
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=30, pady=30)
+        
         # 标题
-        title = QLabel("最后一步: 战网设置")
-        title.setStyleSheet("font-size: 20px; color: #ef4444; font-weight: bold; font-family: 'Times New Roman';")
-        layout.addWidget(title)
-
+        title = tk.Label(main_frame, text="最后一步: 战网设置", 
+                        font=("Times New Roman", 20, "bold"), 
+                        fg="#ef4444", bg="#18181b")
+        title.pack(anchor=tk.W, pady=(0, 15))
+        
         # 说明文本
         instructions = (
             "请务必完成以下操作以生效：\n\n"
@@ -154,190 +43,240 @@ class FinalStepDialog(QDialog):
             "3. 勾选 '额外命令行参数'\n"
             "4. 复制并粘贴下方代码到输入框中："
         )
-        lbl_inst = QLabel(instructions)
-        lbl_inst.setWordWrap(True)
-        lbl_inst.setStyleSheet("line-height: 1.5;")
-        layout.addWidget(lbl_inst)
-
-        # 代码复制区域
-        code_frame = QFrame()
-        code_frame.setStyleSheet("background-color: #000; border: 1px solid #3f3f46; border-radius: 4px;")
-        code_layout = QHBoxLayout(code_frame)
-        code_layout.setContentsMargins(10, 10, 10, 10)
-
-        self.code_text = " -enableagentmanager"
-        self.code_lbl = QLabel(self.code_text)
-        self.code_lbl.setStyleSheet("color: #22c55e; font-family: Consolas; font-size: 16px;")
+        lbl_inst = tk.Label(main_frame, text=instructions, 
+                           font=(".", 12), 
+                           fg="#d4d4d8", bg="#18181b", 
+                           justify=tk.LEFT, wraplength=440)
+        lbl_inst.pack(anchor=tk.W, pady=(0, 15))
         
-        self.copy_btn = QPushButton("复制")
-        self.copy_btn.setObjectName("CopyBtn")
-        self.copy_btn.setCursor(Qt.PointingHandCursor)
-        self.copy_btn.clicked.connect(self.copy_to_clipboard)
-
-        code_layout.addWidget(self.code_lbl)
-        code_layout.addStretch()
-        code_layout.addWidget(self.copy_btn)
-        layout.addWidget(code_frame)
-
+        # 代码复制区域
+        code_frame = tk.Frame(main_frame, bg="#000", bd=1, relief=tk.SOLID, highlightbackground="#3f3f46", highlightthickness=1)
+        code_frame.pack(fill=tk.X, pady=(0, 15))
+        
+        code_layout = tk.Frame(code_frame, bg="#000")
+        code_layout.pack(fill=tk.X, padx=10, pady=10)
+        
+        self.code_text = " -enableagentmanager"
+        self.code_lbl = tk.Label(code_layout, text=self.code_text, 
+                                font=("Consolas", 16), 
+                                fg="#22c55e", bg="#000")
+        self.code_lbl.pack(side=tk.LEFT, padx=5)
+        
+        self.copy_btn = tk.Button(code_layout, text="复制", 
+                                 bg="#27272a", fg="#a1a1aa", 
+                                 bd=1, relief=tk.SOLID, highlightbackground="#3f3f46", 
+                                 font=(".", 12), 
+                                 command=self.copy_to_clipboard, width=8)
+        self.copy_btn.pack(side=tk.RIGHT, padx=5)
+        
         # 警告提示
-        warning_frame = QFrame()
-        warning_frame.setStyleSheet("background-color: rgba(127, 29, 29, 0.2); border: 1px solid rgba(127, 29, 29, 0.5); border-radius: 4px;")
-        warn_layout = QHBoxLayout(warning_frame)
-        warn_lbl = QLabel("注意：请确保代码最前方包含一个空格（已包含）。重启游戏后生效。")
-        warn_lbl.setStyleSheet("color: #fca5a5; font-size: 12px; background: transparent;")
-        warn_lbl.setWordWrap(True)
-        warn_layout.addWidget(warn_lbl)
-        layout.addWidget(warning_frame)
-
-        layout.addStretch()
-
+        warning_frame = tk.Frame(main_frame, bg="rgba(127, 29, 29, 0.2)", bd=1, relief=tk.SOLID, highlightbackground="rgba(127, 29, 29, 0.5)")
+        warning_frame.pack(fill=tk.X, pady=(0, 15))
+        
+        warn_lbl = tk.Label(warning_frame, text="注意：请确保代码最前方包含一个空格（已包含）。重启游戏后生效。", 
+                          font=(".", 12), 
+                          fg="#fca5a5", bg="rgba(127, 29, 29, 0.2)", 
+                          wraplength=440)
+        warn_lbl.pack(padx=10, pady=10, anchor=tk.W)
+        
         # 关闭按钮
-        close_btn = QPushButton("我已完成")
-        close_btn.setObjectName("ModalCloseBtn")
-        close_btn.setCursor(Qt.PointingHandCursor)
-        close_btn.clicked.connect(self.accept)
-        layout.addWidget(close_btn, alignment=Qt.AlignRight)
-
+        btn_frame = tk.Frame(main_frame, bg="#18181b")
+        btn_frame.pack(side=tk.RIGHT, pady=(15, 0))
+        
+        close_btn = tk.Button(btn_frame, text="我已完成", 
+                             bg="#27272a", fg="#e4e4e7", 
+                             bd=1, relief=tk.SOLID, highlightbackground="#3f3f46", 
+                             font=(".", 12), 
+                             command=self.accept, width=12)
+        close_btn.pack()
+        
     def copy_to_clipboard(self):
-        clipboard = QApplication.clipboard()
-        clipboard.setText(self.code_text)
-        self.copy_btn.setText("已复制!")
-        self.copy_btn.setStyleSheet("color: #22c55e; border-color: #22c55e;")
-        QTimer.singleShot(2000, self.reset_copy_btn)
-
+        self.clipboard_clear()
+        self.clipboard_append(self.code_text)
+        self.copy_btn.config(text="已复制!", fg="#22c55e", highlightbackground="#22c55e")
+        self.after(2000, self.reset_copy_btn)
+    
     def reset_copy_btn(self):
-        self.copy_btn.setText("复制")
-        self.copy_btn.setStyleSheet("")
+        self.copy_btn.config(text="复制", fg="#a1a1aa", highlightbackground="#3f3f46")
+    
+    def accept(self):
+        self.destroy()
 
-
-class MainWindow(QMainWindow):
+class MainWindow(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("DiabloIV Blood & Bone Restorer")
-        self.setFixedSize(800, 550)
-
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-        main_layout = QVBoxLayout(central_widget)
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.setSpacing(0)
-
+        self.title("DiabloIV Blood & Bone Restorer")
+        self.geometry("800x550")
+        self.resizable(False, False)
+        
+        # 设置样式
+        self.configure(bg="#1a1a1a")
+        
+        # 创建样式
+        self.style = ttk.Style()
+        self.style.theme_use("clam")
+        
+        # 配置ttk样式
+        self.style.configure("TButton", 
+                           background="#27272a", 
+                           foreground="#e4e4e7",
+                           borderwidth=1)
+        
+        # 创建主布局
+        self.create_widgets()
+        
+        # 启动自动检测
+        self.after(500, self.auto_detect_game_path)
+    
+    def create_widgets(self):
         # 1. Header
-        header = QFrame()
-        header.setObjectName("HeaderFrame")
-        header.setFixedHeight(120)
-        header_layout = QVBoxLayout(header)
-        header_layout.setAlignment(Qt.AlignCenter)
+        header = tk.Frame(self, bg="#0f0f11", height=120)
+        header.pack(fill=tk.X, anchor=tk.N)
+        header.pack_propagate(False)
         
-        title = QLabel("Blood & Bone Restorer")
-        title.setObjectName("TitleLabel")
-        subtitle = QLabel("SANCTUARY UNCENSORED PROTOCOL")
-        subtitle.setObjectName("SubtitleLabel")
+        title = tk.Label(header, text="Blood & Bone Restorer", 
+                        font=("Times New Roman", 24, "bold"), 
+                        fg="#ef4444", bg="#0f0f11")
+        title.pack(pady=(20, 5))
         
-        header_layout.addWidget(title, alignment=Qt.AlignCenter)
-        header_layout.addWidget(subtitle, alignment=Qt.AlignCenter)
-        main_layout.addWidget(header)
-
+        subtitle = tk.Label(header, text="SANCTUARY UNCENSORED PROTOCOL", 
+                          font=(".", 12), 
+                          fg="#71717a", bg="#0f0f11")
+        subtitle.pack()
+        
         # 2. Content
-        content_widget = QWidget()
-        content_layout = QVBoxLayout(content_widget)
-        content_layout.setContentsMargins(30, 30, 30, 30)
-        content_layout.setSpacing(20)
-
-        # Path Selection
-        path_label = QLabel("游戏安装目录 (Game Directory)")
-        path_label.setStyleSheet("font-weight: bold; color: #a1a1aa; font-size: 12px; text-transform: uppercase;")
-        content_layout.addWidget(path_label)
-
-        path_row = QHBoxLayout()
-        self.path_input = QLineEdit()
-        self.path_input.setPlaceholderText("正在检测路径...")
-        self.path_input.setReadOnly(True)
+        content_widget = tk.Frame(self, bg="#1a1a1a")
+        content_widget.pack(fill=tk.BOTH, expand=True, padx=30, pady=30)
         
-        browse_btn = QPushButton("浏览...")
-        browse_btn.setObjectName("BrowseBtn")
-        browse_btn.setCursor(Qt.PointingHandCursor)
-        browse_btn.clicked.connect(self.browse_folder)
-
-        path_row.addWidget(self.path_input)
-        path_row.addWidget(browse_btn)
-        content_layout.addLayout(path_row)
-
+        # Path Selection
+        path_label = tk.Label(content_widget, text="游戏安装目录 (Game Directory)", 
+                           font=(".", 12, "bold"), 
+                           fg="#a1a1aa", bg="#1a1a1a")
+        path_label.pack(anchor=tk.W, pady=(0, 10))
+        
+        path_row = tk.Frame(content_widget, bg="#1a1a1a")
+        path_row.pack(fill=tk.X, anchor=tk.W)
+        
+        self.path_input = tk.Entry(path_row, 
+                                  bg="#000", fg="#e4e4e7", 
+                                  bd=1, relief=tk.SOLID, highlightbackground="#3f3f46", 
+                                  font=(".", 14), 
+                                  width=60)
+        self.path_input.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        self.path_input.insert(0, "正在检测路径...")
+        self.path_input.config(state="disabled")
+        
+        browse_btn = tk.Button(path_row, text="浏览...", 
+                              bg="#27272a", fg="#e4e4e7", 
+                              bd=1, relief=tk.SOLID, highlightbackground="#3f3f46", 
+                              font=(".", 12), 
+                              command=self.browse_folder, width=12)
+        browse_btn.pack(side=tk.RIGHT, padx=(10, 0))
+        
         # Action Bar
-        action_frame = QFrame()
-        action_frame.setStyleSheet("background-color: #18181b; border: 1px solid #27272a; border-radius: 6px;")
-        action_layout = QHBoxLayout(action_frame)
-        action_layout.setContentsMargins(20, 15, 20, 15)
-
-        status_layout = QVBoxLayout()
-        status_lbl_title = QLabel("当前状态:")
-        status_lbl_title.setStyleSheet("font-weight: bold; font-size: 13px;")
-        self.status_value = QLabel("未知 / 等待检测")
-        self.status_value.setStyleSheet("color: #ca8a04; font-size: 13px;") 
-        status_layout.addWidget(status_lbl_title)
-        status_layout.addWidget(self.status_value)
-
-        self.restore_btn = QPushButton("执行反和谐 (Restore)")
-        self.restore_btn.setObjectName("RestoreBtn")
-        self.restore_btn.setProperty("mode", "restore") # Default mode
-        self.restore_btn.setCursor(Qt.PointingHandCursor)
-        self.restore_btn.clicked.connect(self.on_main_button_click)
-        self.restore_btn.setEnabled(False)
-
-        action_layout.addLayout(status_layout)
-        action_layout.addStretch()
-        action_layout.addWidget(self.restore_btn)
-        content_layout.addWidget(action_frame)
-
+        action_frame = tk.Frame(content_widget, bg="#18181b", 
+                               bd=1, relief=tk.SOLID, highlightbackground="#27272a")
+        action_frame.pack(fill=tk.X, pady=20, padx=0)
+        action_frame.pack_propagate(False)
+        action_frame.configure(height=80)
+        
+        action_inner = tk.Frame(action_frame, bg="#18181b")
+        action_inner.pack(fill=tk.BOTH, expand=True, padx=20, pady=15)
+        
+        status_layout = tk.Frame(action_inner, bg="#18181b")
+        status_layout.pack(side=tk.LEFT, fill=tk.Y)
+        
+        status_lbl_title = tk.Label(status_layout, text="当前状态:", 
+                                  font=(".", 13, "bold"), 
+                                  fg="#d4d4d8", bg="#18181b")
+        status_lbl_title.pack(anchor=tk.W)
+        
+        self.status_value = tk.Label(status_layout, text="未知 / 等待检测", 
+                                   font=(".", 13), 
+                                   fg="#ca8a04", bg="#18181b")
+        self.status_value.pack(anchor=tk.W)
+        
+        self.restore_btn = tk.Button(action_inner, text="执行反和谐 (Restore)", 
+                                   bg="#991b1b", fg="white", 
+                                   bd=1, relief=tk.SOLID, highlightbackground="#b91c1c", 
+                                   font=(".", 15, "bold"), 
+                                   command=self.on_main_button_click, 
+                                   width=20, height=2)
+        self.restore_btn.pack(side=tk.RIGHT)
+        self.restore_btn.config(state="disabled")
+        
         # Log Console
-        log_label_row = QHBoxLayout()
-        log_lbl = QLabel("SYSTEM LOG")
-        log_lbl.setStyleSheet("font-size: 10px; color: #52525b; font-weight: bold;")
-        log_label_row.addStretch()
-        log_label_row.addWidget(log_lbl)
-        content_layout.addLayout(log_label_row)
-
-        self.console = QTextEdit()
-        self.console.setReadOnly(True)
-        content_layout.addWidget(self.console)
-
-        main_layout.addWidget(content_widget)
-
+        log_label_row = tk.Frame(content_widget, bg="#1a1a1a")
+        log_label_row.pack(fill=tk.X, pady=(0, 10))
+        
+        log_lbl = tk.Label(log_label_row, text="SYSTEM LOG", 
+                         font=(".", 10, "bold"), 
+                         fg="#52525b", bg="#1a1a1a")
+        log_lbl.pack(side=tk.RIGHT)
+        
+        # 日志文本框
+        log_frame = tk.Frame(content_widget, bg="#000", 
+                           bd=1, relief=tk.SOLID, highlightbackground="#3f3f46")
+        log_frame.pack(fill=tk.BOTH, expand=True)
+        
+        self.console = tk.Text(log_frame, 
+                              bg="#000", fg="#a1a1aa", 
+                              bd=0, 
+                              font=("Consolas", 12), 
+                              wrap=tk.WORD)
+        self.console.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        # 添加滚动条
+        scrollbar = tk.Scrollbar(self.console, orient=tk.VERTICAL, command=self.console.yview)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.console.config(yscrollcommand=scrollbar.set)
+        self.console.config(state="disabled")
+        
         # 3. Footer
-        footer = QFrame()
-        footer.setFixedHeight(30)
-        footer.setStyleSheet("background-color: #0f0f11; border-top: 1px solid #27272a;")
-        footer_layout = QHBoxLayout(footer)
-        footer_layout.setContentsMargins(15, 0, 15, 0)
-        f1 = QLabel("BBR Core: Python Edition")
-        f2 = QLabel("Based on BBR Prototype")
-        f1.setStyleSheet("color: #52525b; font-size: 11px;")
-        f2.setStyleSheet("color: #52525b; font-size: 11px;")
-        footer_layout.addWidget(f1)
-        footer_layout.addStretch()
-        footer_layout.addWidget(f2)
-        main_layout.addWidget(footer)
-
-        # Start Detection
-        self.log("System initialized.", "cmd")
-        QTimer.singleShot(500, self.auto_detect_game_path)
-
+        footer = tk.Frame(self, bg="#0f0f11", height=30)
+        footer.pack(fill=tk.X, anchor=tk.S)
+        footer.pack_propagate(False)
+        
+        f1 = tk.Label(footer, text="BBR Core: Python Edition", 
+                     font=(".", 11), 
+                     fg="#52525b", bg="#0f0f11")
+        f1.pack(side=tk.LEFT, padx=15)
+        
+        f2 = tk.Label(footer, text="Based on BBR Prototype", 
+                     font=(".", 11), 
+                     fg="#52525b", bg="#0f0f11")
+        f2.pack(side=tk.RIGHT, padx=15)
+    
     def log(self, message, msg_type="info"):
         timestamp = time.strftime("%H:%M:%S")
-        color = "#a1a1aa"
-        if msg_type == "success": color = "#22c55e"
-        elif msg_type == "error": color = "#ef4444"
-        elif msg_type == "warning": color = "#eab308"
-        elif msg_type == "cmd": color = "#06b6d4"
-
-        html = f'<span style="color: #52525b;">[{timestamp}]</span> <span style="color: {color};">{message}</span>'
-        self.console.append(html)
-        sb = self.console.verticalScrollBar()
-        sb.setValue(sb.maximum())
-        QApplication.processEvents()
-
+        color_code = {"success": "#22c55e", "error": "#ef4444", "warning": "#eab308", "cmd": "#06b6d4"}
+        color = color_code.get(msg_type, "#a1a1aa")
+        
+        # 在tkinter中，我们使用标签来实现彩色文本
+        self.console.config(state="normal")
+        
+        # 插入时间戳
+        self.console.insert(tk.END, f"[{timestamp}] ", "timestamp")
+        
+        # 插入消息
+        self.console.insert(tk.END, f"{message}\n", msg_type)
+        
+        # 设置标签样式
+        self.console.tag_config("timestamp", foreground="#52525b")
+        self.console.tag_config("success", foreground="#22c55e")
+        self.console.tag_config("error", foreground="#ef4444")
+        self.console.tag_config("warning", foreground="#eab308")
+        self.console.tag_config("cmd", foreground="#06b6d4")
+        
+        # 滚动到底部
+        self.console.see(tk.END)
+        self.console.config(state="disabled")
+        
+        # 处理事件
+        self.update_idletasks()
+    
     # --- Path Detection & Validation ---
-
+    
     def find_game_in_registry(self, exe_name="Diablo IV.exe"):
         paths = []
         if winreg is None: return paths
@@ -361,7 +300,7 @@ class MainWindow(QMainWindow):
                         except OSError: continue
             except OSError: continue
         return paths
-
+    
     def scan_common_paths(self, exe_name="Diablo IV.exe"):
         found = []
         drives = [f"{chr(x)}:\\" for x in range(67, 72)]
@@ -375,13 +314,14 @@ class MainWindow(QMainWindow):
                 if os.path.exists(os.path.join(full_path, exe_name)):
                     found.append(full_path)
         return found
-
+    
     def check_game_status(self, path):
         """
         核心功能：检测已选路径下的反和谐状态
         """
-        if not path: return
-
+        if not path:
+            return
+        
         config_path = os.path.join(path, "WTF", "Config.wtf")
         is_valid = False
         
@@ -402,155 +342,178 @@ class MainWindow(QMainWindow):
         
         # 根据状态更新 UI
         if is_valid:
-            self.status_value.setText("已反和谐 (需配置启动参数)")
-            self.status_value.setStyleSheet("color: #22c55e; font-size: 13px; font-weight: bold;")
+            self.status_value.config(text="已反和谐 (需配置启动参数)", fg="#22c55e")
             
             # 切换按钮为“查看指引”模式
-            self.restore_btn.setText("查看启动参数指引")
-            self.restore_btn.setProperty("mode", "guide")
-            self.restore_btn.style().unpolish(self.restore_btn) # 强制刷新样式
-            self.restore_btn.style().polish(self.restore_btn)
-            self.restore_btn.setEnabled(True)
+            self.restore_btn.config(text="查看启动参数指引", bg="#064e3b", 
+                                  fg="#a7f3d0", highlightbackground="#059669")
+            self.restore_btn.config(state="normal")
+            self.restore_btn.mode = "guide"
             
             self.log("检测结果: 配置文件完整且正确。", "success")
         else:
-            self.status_value.setText("未反和谐 / 文件缺失")
-            self.status_value.setStyleSheet("color: #eab308; font-size: 13px; font-weight: bold;")
+            self.status_value.config(text="未反和谐 / 文件缺失", fg="#eab308")
             
             # 切换按钮为“执行反和谐”模式
-            self.restore_btn.setText("执行反和谐 (Restore)")
-            self.restore_btn.setProperty("mode", "restore")
-            self.restore_btn.style().unpolish(self.restore_btn)
-            self.restore_btn.style().polish(self.restore_btn)
-            self.restore_btn.setEnabled(True)
+            self.restore_btn.config(text="执行反和谐 (Restore)", bg="#991b1b", 
+                                  fg="white", highlightbackground="#b91c1c")
+            self.restore_btn.config(state="normal")
+            self.restore_btn.mode = "restore"
             
             if os.path.exists(config_path):
                 self.log("检测结果: 配置文件存在但缺少参数。", "warning")
             else:
                 self.log("检测结果: 未找到反和谐配置文件。", "warning")
-
+    
     def auto_detect_game_path(self):
-        self.log("正在自动检测游戏路径...", "cmd")
-        found_paths = []
-        
-        self.log(">>> 查询 Windows 注册表...")
-        reg_paths = self.find_game_in_registry()
-        if reg_paths:
-            for p in reg_paths: 
-                self.log(f"✓ 注册表找到: {p}", "success")
-                found_paths.append(p)
-        
-        if not found_paths:
-            self.log(">>> 扫描常见硬盘路径...")
-            common_paths = self.scan_common_paths()
-            if common_paths:
-                for p in common_paths: 
-                    self.log(f"✓ 硬盘扫描找到: {p}", "success")
+        def detect():
+            self.log("正在自动检测游戏路径...", "cmd")
+            found_paths = []
+            
+            self.log(">>> 查询 Windows 注册表...")
+            reg_paths = self.find_game_in_registry()
+            if reg_paths:
+                for p in reg_paths: 
+                    self.log(f"✓ 注册表找到: {p}", "success")
                     found_paths.append(p)
-
-        if found_paths:
-            best_path = list(set(found_paths))[0]
-            self.path_input.setText(best_path)
-            self.log(f"✅ 最终锁定路径: {best_path}", "success")
-            # 检测该路径下的状态
-            self.check_game_status(best_path)
-        else:
-            self.log("❌ 未自动找到游戏路径，请手动指定。", "error")
-            self.path_input.setText("")
-            self.path_input.setPlaceholderText("未找到，请手动选择...")
-            self.restore_btn.setEnabled(False)
-
+            
+            if not found_paths:
+                self.log(">>> 扫描常见硬盘路径...")
+                common_paths = self.scan_common_paths()
+                if common_paths:
+                    for p in common_paths: 
+                        self.log(f"✓ 硬盘扫描找到: {p}", "success")
+                        found_paths.append(p)
+            
+            if found_paths:
+                best_path = list(set(found_paths))[0]
+                self.path_input.config(state="normal")
+                self.path_input.delete(0, tk.END)
+                self.path_input.insert(0, best_path)
+                self.path_input.config(state="disabled")
+                self.log(f"✅ 最终锁定路径: {best_path}", "success")
+                # 检测该路径下的状态
+                self.check_game_status(best_path)
+            else:
+                self.log("❌ 未自动找到游戏路径，请手动指定。", "error")
+                self.path_input.config(state="normal")
+                self.path_input.delete(0, tk.END)
+                self.path_input.insert(0, "")
+                self.path_input.config(state="normal")
+                self.restore_btn.config(state="disabled")
+        
+        # 在新线程中运行检测，避免阻塞UI
+        thread = threading.Thread(target=detect)
+        thread.daemon = True
+        thread.start()
+    
     def browse_folder(self):
-        start_dir = self.path_input.text() if self.path_input.text() else "C:\\"
-        dir_path = QFileDialog.getExistingDirectory(self, "选择 Diablo IV 安装目录", start_dir)
+        start_dir = self.path_input.get() if self.path_input.get() else "C:/"
+        dir_path = filedialog.askdirectory(parent=self, 
+                                          title="选择 Diablo IV 安装目录", 
+                                          initialdir=start_dir)
+        
         if dir_path:
             dir_path = os.path.normpath(dir_path)
             # 简单校验
             if os.path.exists(os.path.join(dir_path, "Diablo IV.exe")) or os.path.exists(os.path.join(dir_path, "Diablo IV Launcher.exe")):
-                self.path_input.setText(dir_path)
+                self.path_input.config(state="normal")
+                self.path_input.delete(0, tk.END)
+                self.path_input.insert(0, dir_path)
+                self.path_input.config(state="disabled")
                 self.log(f"已手动选择目录: {dir_path}", "cmd")
-                # 手动选择后也要检测状态
+                # 检测该路径下的状态
                 self.check_game_status(dir_path)
             else:
-                self.path_input.setText(dir_path)
+                self.path_input.config(state="normal")
+                self.path_input.delete(0, tk.END)
+                self.path_input.insert(0, dir_path)
+                self.path_input.config(state="normal")
                 self.log(f"警告: 该目录下未发现游戏主程序。", "warning")
                 # 依然允许尝试检测，防止文件名变动
                 self.check_game_status(dir_path)
-
+    
     def on_main_button_click(self):
         """主按钮点击处理，根据模式分发"""
-        mode = self.restore_btn.property("mode")
+        mode = getattr(self.restore_btn, 'mode', 'restore')
         if mode == "guide":
             # 仅显示指引
             dialog = FinalStepDialog(self)
-            dialog.exec()
+            self.wait_window(dialog)
         else:
             # 执行反和谐
             self.run_restoration_logic()
-
+    
     def run_restoration_logic(self):
-        game_path = self.path_input.text()
-        if not game_path or not os.path.exists(game_path):
-            self.log(f"错误: 路径无效", "error")
-            return
-
-        self.restore_btn.setEnabled(False)
-        self.restore_btn.setText("处理中...")
-        self.log("-" * 30, "cmd")
+        def restoration():
+            game_path = self.path_input.get()
+            if not game_path or not os.path.exists(game_path):
+                self.log(f"错误: 路径无效", "error")
+                return
         
-        try:
-            self.log("初始化反和谐程序...", "cmd")
-            QApplication.processEvents()
-            time.sleep(0.5)
-
-            wtf_folder = os.path.join(game_path, "WTF")
-            config_file = os.path.join(wtf_folder, "Config.wtf")
-
-            # 1. 创建文件夹
-            if not os.path.exists(wtf_folder):
-                self.log(f"正在创建目录: {wtf_folder}", "warning")
-                os.makedirs(wtf_folder)
-                time.sleep(0.2)
+            self.restore_btn.config(state="disabled")
+            self.restore_btn.config(text="处理中...")
+            self.log("-" * 30, "cmd")
             
-            # 2. 写入文件
-            content = 'SET OverrideArchive "0"'
-            file_mode = 'w'
-            
-            if os.path.exists(config_file):
-                self.log("更新现有配置文件...", "info")
-                try:
-                    with open(config_file, 'r', encoding='utf-8') as f: existing = f.read()
-                except: 
-                    with open(config_file, 'r', encoding='latin-1') as f: existing = f.read()
+            try:
+                self.log("初始化反和谐程序...", "cmd")
+                time.sleep(0.5)
+                self.update_idletasks()
+        
+                wtf_folder = os.path.join(game_path, "WTF")
+                config_file = os.path.join(wtf_folder, "Config.wtf")
+        
+                # 1. 创建文件夹
+                if not os.path.exists(wtf_folder):
+                    self.log(f"正在创建目录: {wtf_folder}", "warning")
+                    os.makedirs(wtf_folder)
+                    time.sleep(0.2)
+                    self.update_idletasks()
                 
-                if 'SET OverrideArchive "0"' not in existing:
-                     with open(config_file, 'a', encoding='utf-8') as f:
-                        f.write(f'\n{content}\n')
-                     self.log(f"参数已追加。", "success")
-            else:
-                with open(config_file, 'w', encoding='utf-8') as f:
-                    f.write(content)
-                self.log(f"文件创建成功。", "success")
-
-            time.sleep(0.5)
-            self.log("操作完成。", "success")
-            
-            # 刷新状态
-            self.check_game_status(game_path)
-            
-            # 弹出指引
-            time.sleep(0.5)
-            dialog = FinalStepDialog(self)
-            dialog.exec()
-
-        except Exception as e:
-            self.log(f"错误: {str(e)}", "error")
-            self.restore_btn.setEnabled(True)
-            self.restore_btn.setText("执行反和谐 (Restore)")
+                # 2. 写入文件
+                content = 'SET OverrideArchive "0"'
+        
+                if os.path.exists(config_file):
+                    self.log("更新现有配置文件...", "info")
+                    try:
+                        with open(config_file, 'r', encoding='utf-8') as f: 
+                            existing = f.read()
+                    except: 
+                        with open(config_file, 'r', encoding='latin-1') as f: 
+                            existing = f.read()
+                    
+                    if 'SET OverrideArchive "0"' not in existing:
+                         with open(config_file, 'a', encoding='utf-8') as f:
+                            f.write(f'\n{content}\n')
+                         self.log(f"参数已追加。", "success")
+                else:
+                    with open(config_file, 'w', encoding='utf-8') as f:
+                        f.write(content)
+                    self.log(f"文件创建成功。", "success")
+        
+                time.sleep(0.5)
+                self.update_idletasks()
+                self.log("操作完成。", "success")
+                
+                # 刷新状态
+                self.check_game_status(game_path)
+                
+                # 弹出指引
+                time.sleep(0.5)
+                self.update_idletasks()
+                dialog = FinalStepDialog(self)
+                self.wait_window(dialog)
+        
+            except Exception as e:
+                self.log(f"错误: {str(e)}", "error")
+                self.restore_btn.config(text="执行反和谐 (Restore)")
+                self.restore_btn.config(state="normal")
+        
+        # 在新线程中运行恢复逻辑，避免阻塞UI
+        thread = threading.Thread(target=restoration)
+        thread.daemon = True
+        thread.start()
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    app.setStyleSheet(STYLESHEET)
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec())
+    app = MainWindow()
+    app.mainloop()
