@@ -1,4 +1,7 @@
 name: Build Windows EXE
+permissions:
+  contents: write
+  packages: write
 
 on:
   push:
