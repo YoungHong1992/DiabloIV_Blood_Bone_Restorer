@@ -22,8 +22,8 @@ jobs:
         shell: pwsh
         run: |
           python -m pip install --upgrade pip
-          if (Test-Path requirements.txt) { pip install -r requirements.txt }
-          pip install pyinstaller PySide6
+          if (Test-Path requirements.txt) { python -m pip install -r requirements.txt }
+          python -m pip install pyinstaller PySide6
 
       - name: Get PySide6 plugins path
         id: plugins
@@ -37,7 +37,7 @@ jobs:
         run: |
           $plugins = $env:PY_SIDE_PLUGINS
           Write-Host "Using PySide6 plugins path: $plugins"
-          pyinstaller --noconfirm --onefile --windowed --name "DiabloIV_BBR" --add-data "$plugins;PySide6_plugins" DiabloIV_Blood_Bone_Restorer.py
+          python -m PyInstaller --noconfirm --onefile --windowed --name "DiabloIV_BBR" --add-data "$plugins;PySide6_plugins" DiabloIV_Blood_Bone_Restorer.py
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

@@ -3,15 +3,46 @@ param(
 )
 
 Write-Host "Starting local build for $Name"
-python -m pip install --upgrade pip
-if (Test-Path requirements.txt) { pip install -r requirements.txt }
-pip install pyinstaller PySide6
 
+# 首先删除旧的虚拟环境并重新创建
+if (Test-Path ".venv") {
+    Write-Host "Removing existing virtual environment..."
+    Remove-Item -Recurse -Force .venv
+}
+
+Write-Host "Creating new virtual environment..."
+python -m venv .venv
+
+# 激活虚拟环境
+Write-Host "Activating virtual environment..."
+.venv\Scripts\Activate.ps1
+
+# 确保pip可用
+Write-Host "Ensuring pip is available..."
+python -m ensurepip --upgrade
+
+# 升级pip
+Write-Host "Upgrading pip..."
+python -m pip install --upgrade pip
+
+# 安装依赖
+if (Test-Path requirements.txt) { 
+    Write-Host "Installing requirements..."
+    python -m pip install -r requirements.txt 
+}
+
+# 安装pyinstaller
+Write-Host "Installing pyinstaller..."
+python -m pip install pyinstaller
+
+# 获取PySide6插件路径
 $plugins = python -c "import PySide6, os; print(os.path.join(os.path.dirname(PySide6.__file__), 'plugins'))"
 
 Write-Host "Detected PySide6 plugins at: $plugins"
 
-pyinstaller --noconfirm --onefile --windowed --name $Name --add-data "$plugins;PySide6_plugins" DiabloIV_Blood_Bone_Restorer.py
+# 使用python -m pyinstaller而不是直接调用pyinstaller
+Write-Host "Running pyinstaller..."
+python -m PyInstaller --noconfirm --onefile --windowed --name $Name --add-data "$plugins;PySide6_plugins" DiabloIV_Blood_Bone_Restorer.py
 
 if (Test-Path "dist\$Name.exe") {
     Write-Host "Build successful: dist\$Name.exe"
