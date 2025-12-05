@@ -1,25 +1,90 @@
-# DiabloIV_Blood_Bone_Restorer — CI Windows EXE Build
+# DiabloIV_BBR(DiabloIV Blood & Bone Restorer)
+# 暗黑四BBR(暗黑四血骨还原器/暗黑四反和谐工具)
 
-说明：本仓库已添加 GitHub Actions workflow 用于在 `windows-latest` runner 上构建单文件 Windows EXE（通过 PyInstaller）。构建结果会作为 artifact 上传；当你推送以 `v*` 为前缀的 tag（例如 `v1.0.0`）时，workflow 会把 exe 附加为 GitHub Release 资产。
+![License](https://img.shields.io/github/license/YoungHong1992/DiabloIV_Blood_Bone_Restorer)
+![Python](https://img.shields.io/badge/Python-3.12-blue.svg)
+![Platform](https://img.shields.io/badge/Platform-Windows-win)
+![Status](https://img.shields.io/badge/Status-Active-success)
 
-快速使用说明：
 
-- 本地构建（在 Windows PowerShell）：
+> **⚠️ IMPORTANT / 重要提示**
+>
+> **English:** This project is free and open-source software licensed under **GNU GPL v3.0**. **If you paid for this software, you have been scammed.**
+>
+> **中文:** 本项目是基于 **GNU GPL v3.0** 协议的**免费开源软件**。**如果你是花钱买的，说明你被骗了。**
 
-```powershell
-.\build_windows.ps1 -Name "DiabloIV_BBR"
-```
+---
 
-- 在 GitHub 上触发：
-  - Push 到 `main` 会触发构建并上传 artifact（但不会自动创建 Release，除非你 push tag）。
-  - Push 一个 tag，如 `git tag v1.0.0 && git push origin v1.0.0` 会触发构建并把 exe 附加到 Release。
+## 📖 Introduction (项目介绍)
 
-产物位置：`dist/DiabloIV_BBR.exe`（在 workflow 中上传为 artifact）。
+### English
+**DiabloIV Blood & Bone Restorer** is a safe, open-source desktop utility designed to manage the local configuration of Diablo IV. Its primary purpose is to restore the original visual fidelity (uncensored assets) for region-locked clients by managing the `Config.wtf` file.
 
-注意事项：
-- 单文件 exe 可能较大，且部分杀毒软件会误报。建议在 Release 中提供 SHA256 校验和并说明签名状态。
-- 如果需要代码签名（Authenticode），请准备证书并把签名步骤加入 CI；需要将证书凭据安全地放入 `secrets`。
+### 中文
+**DiabloIV Blood & Bone Restorer** 是一款安全、开源的桌面工具，专为暗黑破坏神4设计。它的主要功能是通过管理本地配置文件 (`Config.wtf`)，帮助锁区客户端（如国服/亚服）恢复原本的视觉保真度（即“反和谐”效果）。
 
-如果你希望我继续：
-- 我可以添加一个 PyInstaller spec 文件来更稳健地收集 Qt 插件与资源（建议）。
-- 我可以把 workflow 改为在每次 `push` 到 `main` 自动创建/更新 Draft Release（如果你想要更自动化）。
+---
+
+## ✨ Key Features (核心功能)
+
+### English
+*   **Safety First:** Operates strictly via standard **File I/O**. It does **NOT** read/write game memory, inject code, or modify game executables (`.exe`). It is fully compliant with configuration editing standards.
+*   **Auto Detection:** Automatically locates your game installation using Windows Registry scanning and smart disk search.
+*   **One-Click Restore:** Safely appends the necessary parameter (`OverrideArchive`) to your local configuration file.
+*   **Transparent:** The source code is fully open for community audit.
+
+### 中文
+*   **绝对安全**：仅进行标准的**文件读写**操作。**绝不**读取/修改游戏内存、不注入代码、也不修改游戏执行文件 (`.exe`)。完全符合修改配置文件的合规标准。
+*   **自动检测**：利用 Windows 注册表和智能磁盘扫描，自动定位您的游戏安装路径。
+*   **一键恢复**：安全地将必要的参数 (`OverrideArchive`) 添加到您的本地配置文件中。
+*   **开源透明**：源代码完全公开，接受社区审查。
+
+---
+
+## 🚀 How to Use (使用方法)
+
+### English
+1.  **Download:** Get the latest executable from the [Releases Page](https://github.com/YoungHong1992/DiabloIV_Blood_Bone_Restorer/releases).
+    *   *Note: If Windows SmartScreen warns you, click "More Info" -> "Run Anyway". (We are currently applying for Microsoft certification).*
+2.  **Run:** Open the application. It will automatically detect your game path.
+3.  **Restore:** Click the **"Execute Restore"** button. The tool will modify the config file.
+4.  **Final Step (Crucial):**
+    *   Open **Battle.net Launcher**.
+    *   Go to **Game Settings** -> **Diablo IV**.
+    *   Check **"Additional command line arguments"**.
+    *   Enter: `-enableagentmanager`
+    *   Launch the game.
+
+### 中文
+1.  **下载**：前往 [Releases 页面](https://github.com/YoungHong1992/DiabloIV_Blood_Bone_Restorer/releases) 下载最新的程序。
+    *   *注意：如果 Windows SmartScreen 弹出拦截警告，请点击“更多信息” -> “仍要运行”。（我们正在申请微软安全认证）。*
+2.  **运行**：打开程序，它会自动检测您的游戏路径。
+3.  **执行**：点击 **“执行反和谐 (Restore)”** 按钮，工具将修改配置文件。
+4.  **最后一步（关键）**：
+    *   打开 **战网客户端 (Battle.net)**。
+    *   点击 **“游戏设置”** -> **“暗黑破坏神 IV”**。
+    *   勾选 **“额外命令行参数”**。
+    *   输入： `-enableagentmanager`
+    *   启动游戏即可生效。
+
+---
+
+## 🛠️ Build from Source (源码构建)
+
+**English:**
+If you are a developer, you can build the executable yourself to ensure safety.
+
+**中文:**
+如果您是开发者，您可以自行编译可执行文件以确信其安全性。
+
+**Requirements:** Python 3.12+
+
+```bash
+# 1. Clone the repository / 克隆仓库
+git clone https://github.com/YoungHong1992/DiabloIV_Blood_Bone_Restorer.git
+
+# 2. Install dependencies / 安装依赖 (PyInstaller is only needed for building exe)
+pip install pyinstaller
+
+# 3. Build EXE / 编译 EXE
+python -m PyInstaller --noconfirm --onefile --windowed --name "DiabloIV_BBR" DiabloIV_Blood_Bone_Restorer.py
