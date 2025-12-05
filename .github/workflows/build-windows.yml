@@ -45,3 +45,4 @@ jobs:
         with:
           artifacts: dist/DiabloIV_BBR.exe
           token: ${{ secrets.GITHUB_TOKEN }}
+          skipIfReleaseExists: true
