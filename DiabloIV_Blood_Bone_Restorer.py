@@ -6,6 +6,8 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import threading
 
+__version__ = "1.0.0"
+
 # 引入 winreg 用于访问 Windows 注册表
 try:
     import winreg
@@ -70,12 +72,12 @@ class FinalStepDialog(tk.Toplevel):
         self.copy_btn.pack(side=tk.RIGHT, padx=5)
         
         # 警告提示
-        warning_frame = tk.Frame(main_frame, bg="rgba(127, 29, 29, 0.2)", bd=1, relief=tk.SOLID, highlightbackground="rgba(127, 29, 29, 0.5)")
+        warning_frame = tk.Frame(main_frame, bg="#2d1f1f", bd=1, relief=tk.SOLID, highlightbackground="#7f1d1d")
         warning_frame.pack(fill=tk.X, pady=(0, 15))
         
         warn_lbl = tk.Label(warning_frame, text="注意：请确保代码最前方包含一个空格（已包含）。重启游戏后生效。", 
                           font=(".", 12), 
-                          fg="#fca5a5", bg="rgba(127, 29, 29, 0.2)", 
+                          fg="#fca5a5", bg="#2d1f1f", 
                           wraplength=440)
         warn_lbl.pack(padx=10, pady=10, anchor=tk.W)
         
@@ -108,6 +110,14 @@ class MainWindow(tk.Tk):
         self.title("DiabloIV Blood & Bone Restorer")
         self.geometry("800x550")
         self.resizable(False, False)
+        
+        # 窗口居中
+        self.update_idletasks()
+        width = 800
+        height = 550
+        x = (self.winfo_screenwidth() // 2) - (width // 2)
+        y = (self.winfo_screenheight() // 2) - (height // 2)
+        self.geometry(f"{width}x{height}+{x}+{y}")
         
         # 设置样式
         self.configure(bg="#1a1a1a")
