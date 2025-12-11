@@ -5,6 +5,7 @@ import platform
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import threading
+import webbrowser
 
 __version__ = "1.0.0"
 
@@ -19,7 +20,7 @@ class FinalStepDialog(tk.Toplevel):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.title("最后一步: 战网设置")
-        self.geometry("500x350")
+        self.withdraw()
         self.resizable(False, False)
         self.transient(parent)
         self.grab_set()
@@ -48,7 +49,7 @@ class FinalStepDialog(tk.Toplevel):
         lbl_inst = tk.Label(main_frame, text=instructions, 
                            font=(".", 12), 
                            fg="#d4d4d8", bg="#18181b", 
-                           justify=tk.LEFT, wraplength=440)
+                           justify=tk.LEFT, wraplength=400)
         lbl_inst.pack(anchor=tk.W, pady=(0, 15))
         
         # 代码复制区域
@@ -78,7 +79,7 @@ class FinalStepDialog(tk.Toplevel):
         warn_lbl = tk.Label(warning_frame, text="注意：请确保代码最前方包含一个空格（已包含）。重启游戏后生效。", 
                           font=(".", 12), 
                           fg="#fca5a5", bg="#2d1f1f", 
-                          wraplength=440)
+                          wraplength=400)
         warn_lbl.pack(padx=10, pady=10, anchor=tk.W)
         
         # 关闭按钮
@@ -91,7 +92,16 @@ class FinalStepDialog(tk.Toplevel):
                              font=(".", 12), 
                              command=self.accept, width=12)
         close_btn.pack()
-        
+
+        # 自动调整大小并居中
+        self.update_idletasks()
+        width = self.winfo_reqwidth()
+        height = self.winfo_reqheight()
+        x = (self.winfo_screenwidth() // 2) - (width // 2)
+        y = (self.winfo_screenheight() // 2) - (height // 2)
+        self.geometry(f"{width}x{height}+{x}+{y}")
+        self.deiconify()
+
     def copy_to_clipboard(self):
         self.clipboard_clear()
         self.clipboard_append(self.code_text)
@@ -247,10 +257,11 @@ class MainWindow(tk.Tk):
         footer.pack(fill=tk.X, anchor=tk.S)
         footer.pack_propagate(False)
         
-        f1 = tk.Label(footer, text="BBR Core: Python Edition", 
-                     font=(".", 11), 
-                     fg="#52525b", bg="#0f0f11")
+        f1 = tk.Label(footer, text="https://github.com/YoungHong1992/DiabloIV_Blood_Bone_Restorer", 
+                     font=(".", 11, "underline"), 
+                     fg="#3b82f6", bg="#0f0f11", cursor="hand2")
         f1.pack(side=tk.LEFT, padx=15)
+        f1.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/YoungHong1992/DiabloIV_Blood_Bone_Restorer"))
         
         f2 = tk.Label(footer, text="Based on BBR Prototype", 
                      font=(".", 11), 
