@@ -7,6 +7,7 @@
 ![Platform](https://img.shields.io/badge/Platform-Windows-win)
 ![Status](https://img.shields.io/badge/Status-Active-success)
 
+## 📖 Sponsor (赞助商)
 ![](assets/glm-coding-plan.png)
 > GLM CODING PLAN 是专为AI编码打造的订阅套餐，每月最低仅需20元，即可在十余款主流AI编码工具如Claude Code、中畅享智谱旗舰模型GLM-4.6，为开发者提供顶尖的编码体验。
 
